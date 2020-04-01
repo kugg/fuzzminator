@@ -13,8 +13,9 @@ RUN apt-get update \
         gcc \
         git \
         make \
-    && git clone https://github.com/jdbirdwell/afl \
+    && git clone https://github.com/liangdzou/afl \
     && cd afl \
+    && git checkout afl-2.39b \
     && make \
     && make install \
     && cd .. \
@@ -53,11 +54,11 @@ RUN apt-get update \
         libssl-dev \
         zlib1g-dev \
         gcc \
-        make
+        make \
+    && echo -e "GET /index.html HTTP/1.0\r\n" > ./input 
 
-COPY tengine-${TENGINE_VERSION}/conf/nginx.conf /etc/nginx/
-COPY tengine-${TENGINE_VERSION}/conf/nginx.conf /input/
+COPY input /input/
 COPY tengine-${TENGINE_VERSION}/html/index.html /etc/nginx/default/
 COPY tengine-${TENGINE_VERSION}/packages/debian/nginx.vh.default.conf /etc/nginx/conf.d/
 
-CMD ["afl-fuzz", "-M", "tfuzzer", "-i", "/input", "-o", "/output", "nginx", "-c", "@@"]
+CMD ["afl-fuzz", "-M", "masterA:1/1", "-i", "/input", "-o", "/output", "-D", "10", "-t", "10", "-N", "tcp://127.0.0.1:80", "nginx"]
