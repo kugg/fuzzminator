@@ -11,12 +11,10 @@ RUN apt-get update \
         zlib1g-dev \
         wget \
         gcc \
+        git \
         make \
-    && wget https://lcamtuf.coredump.cx/afl/releases/afl-latest.tgz \
-    && gunzip afl-latest.tgz \
-    && tar xvf afl-latest.tar \
-    && rm afl-latest.tar \
-    && cd afl-* \
+    && git clone https://github.com/jdbirdwell/afl \
+    && cd afl \
     && make \
     && make install \
     && cd .. \
