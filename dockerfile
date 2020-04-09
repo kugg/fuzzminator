@@ -23,7 +23,7 @@ RUN apt-get update \
     && dirname=$(tar -zxvf `basename ${URL}`| tail -n 1 |  cut -f 1 -d '/') \
     && cd $dirname \
     && find . -name GNUmakefile -exec sed -i 's/cc\ /afl-gcc\ /g' {} + \
-    && sed -i '/nroff/d' ./src/nhttpd/GNUmakefile \
+    && find . -name GNUmakefile -exec sed -i '/nhttpd.8/d' {} \; \
     && make \
     && make install \
     && apt-get clean && apt-get remove -y \
@@ -34,9 +34,7 @@ RUN apt-get update \
         make \
     && sed -i s"/_nostromo/root/g" conf/nhttpd.conf-dist \
     && sed -i s"#/var/nostromo/#$PWD#" conf/nhttpd.conf-dist \
-    && mkdir input/ \
-    && echo -e "GET /index.html HTTP/1.0\r\n" > ./input/getrequest
+    && echo -e "GET /index.html HTTP/1.0\r\n" > ./input
 
 COPY input /input/
-
-CMD ["afl-fuzz", "-M", "masterA:1/1", "-i", "/input", "-o", "/output", "-D", "10", "-t", "10", "-N", "tcp://127.0.0.1:80", "nhttpd -c ./conf/nhttpd.conf-dist"]
+CMD ["afl-fuzz", "-M", "masterA:1/1", "-i", "/input", "-o", "/output", "-D", "100", "-t", "30", "-N", "tcp://127.0.0.1:80", "nhttpd", "-c", "./conf/nhttpd.conf-dist"]
