@@ -18,6 +18,6 @@ docker volume create --driver local \
     $OUTPUT_VOLUME
 
 for id in `seq 2 $(nproc)`; do
-    docker run -v $INPUT_VOLUME:/$INPUT_VOLUME -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.$id --env JOB="-S $id" --detach $NAME:$VERSION
+    docker run -v $INPUT_VOLUME:/$INPUT_VOLUME -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.$id --env JOB="-S $id" --env ID=$id --detach $NAME:$VERSION
 done
-docker run -v $INPUT_VOLUME:/$INPUT_VOLUME -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.1 --env JOB='-M master' --detach $NAME:$VERSION
+docker run -v $INPUT_VOLUME:/$INPUT_VOLUME -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.1 --env JOB='-M master' --env ID=$id --detach $NAME:$VERSION
