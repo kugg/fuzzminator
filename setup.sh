@@ -8,13 +8,13 @@ docker build --tag $NAME:$VERSION .
 docker volume create --driver local \
     --opt type=tmpfs \
     --opt device=tmpfs \
-    --opt o=size=100m,uid=1000 \
+    --opt o=size=100m,uid=999 \
     $INPUT_VOLUME
 
 docker volume create --driver local \
     --opt type=tmpfs \
     --opt device=tmpfs \
-    --opt o=size=100m,uid=1000 \
+    --opt o=size=100m,uid=999 \
     $OUTPUT_VOLUME
 
 for id in `seq 2 $(nproc)`; do
