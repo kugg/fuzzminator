@@ -44,10 +44,6 @@ RUN wget ${URL} \
     && sed -i "/logpid/d" conf/nhttpd.conf-dist \
     && sed -i "/logaccess/d" conf/nhttpd.conf-dist
 
-# TODO: Unresolved issue with rsyslog!
-# You need to docker exec -it --user root afl.1 /etc/init.d/rsyslog restart
-# To make the fuzzing start.
-
 # Fuzzer setup
 COPY ./input /input/
 RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
