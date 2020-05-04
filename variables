@@ -2,3 +2,4 @@ NAME=afl
 VERSION=0.1
 OUTPUT_VOLUME=output
 INPUT_VOLUME=input
+URL=https://github.com/kugg/fuzzample

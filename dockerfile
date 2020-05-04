@@ -1,6 +1,6 @@
 FROM debian:stretch-slim
 
-ARG URL=http://nazgul.ch/dev/nostromo-1.9.7.tar.gz
+ARG URL=$URL
 
 # Standard setup
 RUN apt-get update && apt-get -y install \
@@ -26,11 +26,9 @@ RUN apt-get update && apt-get -y install \
 # Target setup
 RUN wget ${URL} \
     && dirname=$(tar -zxvf `basename ${URL}`| tail -n 1 |  cut -f 1 -d '/') \
+    && echo "DIR=$dirname" >> ./env \
     && cd $dirname \
-    && find . -name GNUmakefile -exec sed -i 's/cc\ /afl-gcc\ /g' {} + \
-    && find . -name GNUmakefile -exec sed -i '/nhttpd.8/d' {} \; \
-    && find . -name *.c -exec sed -i 's/fork()/0/g' {} + \
-    && sed -i 's/80/8080/g' src/nhttpd/config.h \
+    && ./configure CC="afl-gcc" CXX="afl-g++" --disable-shared \
     && make \
     && make install \
     && apt-get clean && apt-get remove -y \
@@ -39,14 +37,10 @@ RUN wget ${URL} \
         zlib1g-dev \
         gcc \
         make \
-    && sed -i s"/_nostromo/fuzz/g" conf/nhttpd.conf-dist \
-    && sed -i s"#/var/nostromo#$PWD#" conf/nhttpd.conf-dist \
-    && sed -i "/logpid/d" conf/nhttpd.conf-dist \
-    && sed -i "/logaccess/d" conf/nhttpd.conf-dist
 
 # Fuzzer setup
 COPY ./input /input/
 RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
-RUN chown fuzz:fuzz -R nostromo-1.9.7
+RUN source ./env && chown fuzz:fuzz -R $DIR
 USER fuzz:fuzz
-CMD afl-fuzz $JOB -i /input -o /output -D 10 -t 90 -N tcp://127.0.0.1:8080 nhttpd -c ./conf/nhttpd.conf-dist
+CMD afl-fuzz $JOB -i /input -o /output -D 10 -t 90 -N tcp://127.0.0.1:8080 server
