@@ -1,6 +1,6 @@
 FROM debian:stretch-slim
 
-ARG URL=$URL
+ARG URL=https://github.com/kugg/fuzzample/archive/demo.tar.gz
 
 # Standard setup
 RUN apt-get update && apt-get -y install \
@@ -11,36 +11,32 @@ RUN apt-get update && apt-get -y install \
         gcc \
         git \
         make \
-        rsyslog \
 	strace \
         tcpdump \
         procps \
-        vim \
+        nano \
+        autoconf \
+        automake \
+        autotools-dev \
     && git clone https://github.com/liangdzou/afl \
     && cd afl \
     && git checkout afl-2.39b \
     && make \
-    && make install \
-    && cd ..
+    && make install
 
 # Target setup
 RUN wget ${URL} \
     && dirname=$(tar -zxvf `basename ${URL}`| tail -n 1 |  cut -f 1 -d '/') \
     && echo "DIR=$dirname" >> ./env \
     && cd $dirname \
-    && ./configure CC="afl-gcc" CXX="afl-g++" --disable-shared \
+    && autoreconf -vif \
+    && ./configure CC="afl-gcc" CXX="afl-g++" \
     && make \
-    && make install \
-    && apt-get clean && apt-get remove -y \
-        libpcre++-dev \
-        libssl-dev \
-        zlib1g-dev \
-        gcc \
-        make \
+    && make install
 
 # Fuzzer setup
 COPY ./input /input/
 RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
 RUN source ./env && chown fuzz:fuzz -R $DIR
 USER fuzz:fuzz
-CMD afl-fuzz $JOB -i /input -o /output -D 10 -t 90 -N tcp://127.0.0.1:8080 server
+CMD afl-fuzz $JOB -i /input -o /output -D 10 -t 90 -N tcp://127.0.0.1:9034 server
