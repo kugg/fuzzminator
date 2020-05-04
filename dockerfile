@@ -37,6 +37,6 @@ RUN wget ${URL} \
 # Fuzzer setup
 COPY ./input /input/
 RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
-RUN source ./env && chown fuzz:fuzz -R $DIR
+RUN . ./env && chown fuzz:fuzz -R $DIR
 USER fuzz:fuzz
 CMD afl-fuzz $JOB -i /input -o /output -D 10 -t 90 -N tcp://127.0.0.1:9034 server

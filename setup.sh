@@ -25,6 +25,6 @@ done
 docker run -v $INPUT_VOLUME:/$INPUT_VOLUME -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.1 --env URL=$url --env JOB='-M master' --env ID=$id --detach $NAME:$VERSION
 
 # Post installation fix for a bug in rsyslog caused by systemd.
-for id in `seq 1 $(nproc)`; do
-    docker exec -d --user root afl.$id /etc/init.d/rsyslog restart
-done
+# for id in `seq 1 $(nproc)`; do
+#    docker exec -d --user root $NAME.$id /etc/init.d/rsyslog restart
+# done
