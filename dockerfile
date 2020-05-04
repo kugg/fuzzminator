@@ -49,4 +49,4 @@ COPY ./input /input/
 RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
 RUN chown fuzz:fuzz -R nostromo-1.9.7
 USER fuzz:fuzz
-CMD afl-fuzz $JOB -i /input -o /output -D 30 -t 10 -N tcp://127.0.0.1:8080 nhttpd -c ./conf/nhttpd.conf-dist
+CMD afl-fuzz $JOB -i /input -o /output -D 10 -t 90 -N tcp://127.0.0.1:8080 nhttpd -c ./conf/nhttpd.conf-dist
