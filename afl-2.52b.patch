@@ -1,0 +1,38 @@
+--- afl-llvm-pass.so.cc	2017-03-28 09:48:48.000000000 +0200
++++ ../../afl-2.52b/llvm_mode/afl-llvm-pass.so.cc	2017-06-23 00:49:06.000000000 +0200
+@@ -22,6 +22,8 @@
+ 
+  */
+ 
++#define AFL_LLVM_PASS
++
+ #include "../config.h"
+ #include "../debug.h"
+ 
+@@ -112,11 +114,11 @@
+       BasicBlock::iterator IP = BB.getFirstInsertionPt();
+       IRBuilder<> IRB(&(*IP));
+ 
+-      if (R(100) >= inst_ratio) continue;
++      if (AFL_R(100) >= inst_ratio) continue;
+ 
+       /* Make up cur_loc */
+ 
+-      unsigned int cur_loc = R(MAP_SIZE);
++      unsigned int cur_loc = AFL_R(MAP_SIZE);
+ 
+       ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);
+ 
+@@ -157,9 +159,9 @@
+ 
+     if (!inst_blocks) WARNF("No instrumentation targets found.");
+     else OKF("Instrumented %u locations (%s mode, ratio %u%%).",
+-             inst_blocks,
+-             getenv("AFL_HARDEN") ? "hardened" : "non-hardened",
+-             inst_ratio);
++             inst_blocks, getenv("AFL_HARDEN") ? "hardened" :
++             ((getenv("AFL_USE_ASAN") || getenv("AFL_USE_MSAN")) ?
++              "ASAN/MSAN" : "non-hardened"), inst_ratio);
+ 
+   }
+ 
