@@ -1,0 +1,60 @@
+FROM debian:testing
+
+ARG URL=https://github.com/kugg/fuzzample/archive/master.tar.gz
+
+# Standard setup
+RUN apt-get update && apt-get -y install \
+        wget \
+        gcc \
+        git \
+        make \
+	strace \
+        tcpdump \
+        procps \
+        nano \
+        build-essential \
+        autoconf \
+        automake \
+        autotools-dev \
+        clang-6.0 \
+        graphviz-dev
+
+# Compiling th LLVM compiler needed for the afl compiler.
+# If this dockerfile is running inside a ubuntu 18 image clang needs to be compiled.
+# WARNING: Doing this takes up to 60GB disk space (consider running debian or precompile on host)
+#RUN git clone https://github.com/llvm/llvm-project.git \
+#   && cd llvm-project \
+#   && mkdir build \
+#   && cmake -DLLVM_ENABLE_PROJECTS=clang -G "Unix Makefiles" ../llvm \
+#   && make
+#   && make install
+
+RUN  git clone https://github.com/liangdzou/afl
+WORKDIR "/afl"
+RUN git checkout afl-2.39b
+# This patch fizes a LLVM comiler bug.
+COPY afl-2.52b.patch /afl/
+RUN patch -p1 < afl-2.52b.patch
+RUN make && make -C llvm_mode LLVM_CONFIG=llvm-config-6.0 CC=clang-6.0 CXX=g++
+RUN make install
+
+# Target setup
+WORKDIR "/"
+RUN wget ${URL} \
+    && dirname=$(tar -zxvf `basename ${URL}`| tail -n 1 |  cut -f 1 -d '/') \
+    && echo "DIR=$dirname" >> ./env \
+    && cd $dirname \
+    && autoreconf -vif \
+    && export CC="/afl/afl-clang-fast" AFL_CC="clang-6.0" \
+    && ./configure \
+    && make \
+    && make install
+
+# Fuzzer setup
+COPY ./input /input/
+RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
+RUN . ./env && chown fuzz:fuzz -R $DIR
+USER fuzz:fuzz
+#ENTRYPOINT bash
+CMD afl-fuzz $JOB -i /input/ -o /output -t 90 -L -N tcp://127.0.0.1:9034 client 127.0.0.1
+#CMD afl-fuzz $JOB -i /input/ -o /output -D 10 -t 90 -N tcp://127.0.0.1:9034 server
