@@ -4,3 +4,6 @@ OUTPUT_VOLUME=output
 INPUT_VOLUME=input
 TARGET=curl
 URL=https://github.com/curl/curl/archive/master.tar.gz
+PORT=1337
+TARGET_ARGS=http://127.0.0.1:1337
+LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib

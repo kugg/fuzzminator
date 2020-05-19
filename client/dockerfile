@@ -46,7 +46,7 @@ RUN apt-get -y install libgpgme-dev autopoint
 WORKDIR "/"
 RUN wget $URL \
     && dirname=$(tar -zxvf `basename ${URL}`| tail -n 1 |  cut -f 1 -d '/') \
-    && echo "DIR=$dirname" >> ./env \
+    && echo "DIR=$dirname" >> ./.env \
     && cd $dirname \
     && autoreconf -vif \
     && export CC="/afl/afl-clang-fast" AFL_CC="clang-6.0" \
@@ -55,7 +55,7 @@ RUN wget $URL \
     && make install
 
 # Make locally compiled libraries available
-RUN echo "LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib" >> ./env
+RUN echo "LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib" >> ./.env
 
 # Test case setup
 COPY ./input /input/
@@ -63,12 +63,12 @@ COPY codeql_wget/wget_const_strings_cmp_httponly.dict ./
 
 # Fuzzer user setup
 RUN groupadd -r fuzz && useradd --no-log-init -g fuzz fuzz
-RUN . ./env && chown fuzz:fuzz -R $DIR
+RUN . ./.env && chown fuzz:fuzz -R $DIR
 USER fuzz:fuzz
 
 #ENTRYPOINT bash
 CMD set -a \
-    && . ./env \
+    && . ./.env \
     && screen -dm -S fuzzer \ 
-         afl-fuzz $JOB -i /input/ -x ./wget_const_strings_cmp_httponly.dict -o /output -t 90 -L -N tcp://127.0.0.1:$PORT $TARGET $TARGET_ARG \
+         afl-fuzz $JOB -i /input/ -x ./wget_const_strings_cmp_httponly.dict -o /output -t 90 -L -N tcp://127.0.0.1:$PORT $TARGET $TARGET_ARGS \
     && read blocking
