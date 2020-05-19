@@ -1,6 +1,6 @@
 FROM debian:testing
 
-ARG URL=https://github.com/kugg/fuzzample/archive/master.tar.gz
+ARG URL
 
 # Standard setup
 RUN apt-get update && apt-get -y install \
@@ -15,6 +15,7 @@ RUN apt-get update && apt-get -y install \
         build-essential \
         autoconf \
         automake \
+        libtool \
         autotools-dev \
         clang-6.0 \
 	screen \
@@ -30,6 +31,7 @@ RUN apt-get update && apt-get -y install \
 #   && make
 #   && make install
 
+# Installing the fuzer
 RUN  git clone https://github.com/liangdzou/afl
 WORKDIR "/afl"
 RUN git checkout afl-2.39b
@@ -40,8 +42,9 @@ RUN make && make -C llvm_mode LLVM_CONFIG=llvm-config-6.0 CC=clang-6.0 CXX=g++
 RUN make install
 
 # Target setup
+RUN apt-get -y install libgpgme-dev autopoint
 WORKDIR "/"
-RUN wget ${URL} \
+RUN wget $URL \
     && dirname=$(tar -zxvf `basename ${URL}`| tail -n 1 |  cut -f 1 -d '/') \
     && echo "DIR=$dirname" >> ./env \
     && cd $dirname \
@@ -51,12 +54,21 @@ RUN wget ${URL} \
     && make \
     && make install
 
-# Fuzzer setup
+# Make locally compiled libraries available
+RUN echo "LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib" >> ./env
+
+# Test case setup
 COPY ./input /input/
 COPY codeql_wget/wget_const_strings_cmp_httponly.dict ./
-RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
+
+# Fuzzer user setup
+RUN groupadd -r fuzz && useradd --no-log-init -g fuzz fuzz
 RUN . ./env && chown fuzz:fuzz -R $DIR
 USER fuzz:fuzz
+
 #ENTRYPOINT bash
-CMD screen -dm -S fuzzer afl-fuzz $JOB -i /input/ -x ./wget_const_strings_cmp_httponly.dict -o /output -t 90 -L -N tcp://127.0.0.1:9034 client 127.0.0.1 && read blocking
-#CMD afl-fuzz $JOB -i /input/ -o /output -D 10 -t 90 -N tcp://127.0.0.1:9034 server
+CMD set -a \
+    && . ./env \
+    && screen -dm -S fuzzer \ 
+         afl-fuzz $JOB -i /input/ -x ./wget_const_strings_cmp_httponly.dict -o /output -t 90 -L -N tcp://127.0.0.1:$PORT $TARGET $TARGET_ARG \
+    && read blocking

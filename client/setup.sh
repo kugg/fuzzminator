@@ -17,12 +17,12 @@ docker volume create --driver local \
     --opt o=size=100m,uid=1000 \
     $OUTPUT_VOLUME
 
-docker build --tag $NAME:$VERSION .
-
+docker build --build-arg URL=$URL --tag $NAME:$VERSION .
+# Set up env variables using --env-file ./variables instead
 for id in `seq 2 $(nproc)`; do
-    docker run -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.$id --env URL=$url --env JOB="-S $id" --env ID=$id --detach $NAME:$VERSION
+    docker run -it -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.$id --env TARGET=$TARGET --env URL=$URL --env JOB="-S $id" --env ID=$id --detach $NAME:$VERSION
 done
-docker run -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.1 --env URL=$url --env JOB="-M master" --env ID=$id --detach $NAME:$VERSION
+docker run -it -v $OUTPUT_VOLUME:/$OUTPUT_VOLUME --name $NAME.1 --env TARGET=$TARGET --env URL=$URL --env JOB="-M master" --env ID=$id --detach $NAME:$VERSION
 
 # Post installation fix for a bug in rsyslog caused by systemd.
 # for id in `seq 1 $(nproc)`; do
