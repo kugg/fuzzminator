@@ -1,1 +1,9 @@
-a
+HTTP/1.1 200 OK
+Date: Mon, 27 Jul 2009 12:28:53 GMT
+Server: Apache/2.2.14 (Win32)
+Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT
+Content-Length: 50
+Content-Type: text/html
+Connection: Closed
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">

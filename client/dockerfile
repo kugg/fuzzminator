@@ -17,6 +17,7 @@ RUN apt-get update && apt-get -y install \
         automake \
         autotools-dev \
         clang-6.0 \
+	screen \
         graphviz-dev
 
 # Compiling th LLVM compiler needed for the afl compiler.
@@ -52,9 +53,10 @@ RUN wget ${URL} \
 
 # Fuzzer setup
 COPY ./input /input/
+COPY codeql_wget/wget_const_strings_cmp_httponly.dict ./
 RUN groupadd -r fuzz && useradd --no-log-init -r -g fuzz fuzz
 RUN . ./env && chown fuzz:fuzz -R $DIR
 USER fuzz:fuzz
 #ENTRYPOINT bash
-CMD afl-fuzz $JOB -i /input/ -o /output -t 90 -L -N tcp://127.0.0.1:9034 client 127.0.0.1
+CMD screen -dm -S fuzzer afl-fuzz $JOB -i /input/ -x ./wget_const_strings_cmp_httponly.dict -o /output -t 90 -L -N tcp://127.0.0.1:9034 client 127.0.0.1 && read blocking
 #CMD afl-fuzz $JOB -i /input/ -o /output -D 10 -t 90 -N tcp://127.0.0.1:9034 server
